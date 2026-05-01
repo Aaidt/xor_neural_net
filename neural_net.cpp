@@ -4,6 +4,7 @@
 #include<vector>
 #include<random>
 #include<cmath>
+#include<string>
 
 double box_muller(){
     static std::random_device rd;
@@ -23,7 +24,6 @@ double box_muller(){
 std::vector<std::vector<double>> randn(int rows, int cols){
     std::vector<std::vector<double>> v(rows, std::vector<double>(cols));
     for(int i = 0; i < rows; i ++){
-        v[i] = {};
         for(int j = 0; j < cols; j++){
             v[i][j] = box_muller() * 0.5;
         }
@@ -35,6 +35,19 @@ std::vector<std::vector<double>> randn(int rows, int cols){
 std::vector<std::vector<double>> zeroes(int cols){
     return std::vector<std::vector<double>> (1, std::vector<double>(cols, 0.0));
 }
+
+template <typename T>
+void print_matrix(const std::string& label, const std::vector<std::vector<T>>& matrix){
+    std::cout << label << ": \n";
+    for(const auto& rows : matrix){
+        for(const auto& val : rows){
+            std::cout << "| " << val << " | ";
+        }
+        std::cout << "\n";
+    }
+    std::cout << "\n";
+}
+
 
 int main (){
     std::vector<std::vector<int>> A = {
@@ -57,11 +70,15 @@ int main (){
 
     std::vector<std::vector<double>> weights_input_hidden = randn(INPUT_SIZE, HIDDEN_SIZE);
     std::vector<std::vector<double>> bias_hidden = zeroes(HIDDEN_SIZE);
+    print_matrix("weights_input_hidden", weights_input_hidden);
+    print_matrix("bias_hidden", bias_hidden);
+    
 
 
     std::vector<std::vector<double>> weights_hidden_output = randn(HIDDEN_SIZE, OUTPUT_SIZE);
     std::vector<std::vector<double>> bias_output = zeroes(OUTPUT_SIZE);
-
+    print_matrix("weights_hidden_output", weights_hidden_output);
+    print_matrix("bias_output", bias_output);
     
 
 
