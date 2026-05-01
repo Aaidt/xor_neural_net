@@ -1,6 +1,7 @@
 #define _USE_MATH_DEFINES
 
 #include<iostream>
+#include<type_traits>
 #include<vector>
 #include<random>
 #include<cmath>
@@ -47,6 +48,37 @@ void print_matrix(const std::string& label, const std::vector<std::vector<T>>& m
     }
     std::cout << "\n";
 }
+
+template <typename T>
+std::vector<std::vector<T>> sigmoid(const std::vector<std::vector<T>>& matrix){
+    static_assert(std::is_floating_point<T>::value, "sigmoid requires a floating-point type");
+
+    std::vector<std::vector<T>> result = matrix
+
+    for(auto& rows : matrix){
+        for(auto& vals : rows){
+            vals = 1.0 / (1.0 + (std::exp(-vals)));
+        }
+    }
+
+    return result;
+}
+
+template <typename T>
+std::vector<std::vector<T>> sigmoid_derivative(const std::vector<std::vector<T>>& sigmoid_output){
+    static_assert(std::is_floating_point<T>::value, "sigmoid derivative requires a floating-point type");
+
+    std::vector<std::vector<T>> result = sigmoid_output;
+
+    for(auto& rows : m){
+        for(auto& val : rows){
+            val = val * (1.0 - val);
+        }
+    }
+
+    return result;
+}
+
 
 
 int main (){
