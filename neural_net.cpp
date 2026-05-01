@@ -2,6 +2,7 @@
 
 #include<iostream>
 #include<type_traits>
+#include<stdexcept>
 #include<vector>
 #include<random>
 #include<cmath>
@@ -11,7 +12,7 @@ double box_muller(){
     static std::random_device rd;
     static std::mt19937 gen(rd());
 
-    std::uniform_real_distribution<double> dist(0.0, 1.0);
+    std::uniform_real_distribution<double> dist(1e-9, 1.0);
 
     double u1 = dist(gen);
     double u2 = dist(gen);
@@ -24,6 +25,7 @@ double box_muller(){
 
 std::vector<std::vector<double>> randn(int rows, int cols){
     std::vector<std::vector<double>> v(rows, std::vector<double>(cols));
+    
     for(int i = 0; i < rows; i ++){
         for(int j = 0; j < cols; j++){
             v[i][j] = box_muller() * 0.5;
@@ -53,9 +55,9 @@ template <typename T>
 std::vector<std::vector<T>> sigmoid(const std::vector<std::vector<T>>& matrix){
     static_assert(std::is_floating_point<T>::value, "sigmoid requires a floating-point type");
 
-    std::vector<std::vector<T>> result = matrix
+    std::vector<std::vector<T>> result = matrix;
 
-    for(auto& rows : matrix){
+    for(auto& rows : result){
         for(auto& vals : rows){
             vals = 1.0 / (1.0 + (std::exp(-vals)));
         }
@@ -70,7 +72,7 @@ std::vector<std::vector<T>> sigmoid_derivative(const std::vector<std::vector<T>>
 
     std::vector<std::vector<T>> result = sigmoid_output;
 
-    for(auto& rows : m){
+    for(auto& rows : result){
         for(auto& val : rows){
             val = val * (1.0 - val);
         }
@@ -79,7 +81,35 @@ std::vector<std::vector<T>> sigmoid_derivative(const std::vector<std::vector<T>>
     return result;
 }
 
+template <typename T>
+std::vector<std::vector<T>> mat_mul(const std::vector<std::vector<T>>& a, const std::vector<std::vector<T>>& b){
+    static_assert(std::is_floating_point<T>::value, "matrix multiplication requires floating-point type");
 
+    if(a.empty() || a[0].empty() || b.empty() || b[0].empty()){
+        throw std::invalid_argument("empty matrix");
+    }
+
+    int rows_a = a.size();
+    int cols_a = a[0].size();
+    int rows_b = b.size();
+    int cols_b = b[0].size();
+    
+    if(cols_a != rows_b){
+        throw std::invalid_argument("cols_a must equal rows_b");
+    }
+
+    std::vector<std::vector<T>> result(rows_a, std::vector<T>(cols_b, 0));
+
+    for(int i = 0; i < rows_a; i++){
+        for(int j = 0; j < cols_b; j++){
+            for(int k = 0; k < cols_a; k++){
+                result[i][j] += a[i][k] * b[k][j];
+            }
+        }
+    }
+
+    return result;
+}
 
 int main (){
     std::vector<std::vector<int>> A = {
@@ -104,8 +134,6 @@ int main (){
     std::vector<std::vector<double>> bias_hidden = zeroes(HIDDEN_SIZE);
     print_matrix("weights_input_hidden", weights_input_hidden);
     print_matrix("bias_hidden", bias_hidden);
-    
-
 
     std::vector<std::vector<double>> weights_hidden_output = randn(HIDDEN_SIZE, OUTPUT_SIZE);
     std::vector<std::vector<double>> bias_output = zeroes(OUTPUT_SIZE);
