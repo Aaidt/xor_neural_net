@@ -182,6 +182,32 @@ Forward<T> forward_pass(
     return out;
 } 
 
+template <typename T>
+T compute_loss(
+    const std::vector<std::vector<T>>& y_true, 
+    const std::vector<std::vector<T>>& y_pred 
+){
+    static_assert(std::is_floating_point<T>::value, "compute_loss requires floating-point type");
+
+    if(y_true.empty() || y_pred.empty() || y_true[0].size() != y_pred[0].size() || y_true.size() != y_pred.size()){
+        throw std::invalid_argument("Matrices for computing loss cannot be empty");
+    }
+
+    int n = y_true.size();
+    int m = y_true[0].size();
+
+    T sum = 0.0;
+
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < m; j++){
+            T diff = (y_true[i][j] - y_pred[i][j]);
+            sum += diff * diff;
+        }
+    }
+
+    return sum / (n * m);
+}
+
 int main (){
     std::vector<std::vector<double>> A = {
         {0.0, 1.0},
@@ -219,7 +245,10 @@ int main (){
         }
         std::cout << std::endl;
     }
-    std::cout << std::endl;
+    std::cout << "Predictions are garbage — the network hasn't learned anything yet." << std::endl;
+
+    double loss = compute_loss(B, fw_pass.a_output);
+    std::cout << "Loss on the first pass: " << loss << std::endl;
 
     return 0;
 }
