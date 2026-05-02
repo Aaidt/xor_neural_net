@@ -489,5 +489,50 @@ int main (){
     double loss = compute_loss(B, fw_pass.a_output);
     std::cout << "Loss on the first pass: " << loss << std::endl;
 
+    double LEARNING_RATE = 2.0;
+    int iterations = 10000;
+    std::vector<double> loss_history;
+
+    std::cout << "Starting training... \n";
+    std::cout << "---------------------------------- \n";
+
+    for(int i = 0; i < iterations; i++){
+        auto fw = forward_pass(A, weights_input_hidden, bias_hidden, weights_hidden_output, bias_output);
+        
+        double loss = compute_loss(fw.a_output, B);
+        
+        loss_history.push_back(loss);
+
+        backward_pass(
+            A, 
+            B, 
+            fw.z_hidden, 
+            fw.a_hidden, 
+            fw.z_output, 
+            fw.a_output, 
+            weights_hidden_output,
+            bias_output,
+            weights_input_hidden,
+            bias_hidden,
+            LEARNING_RATE
+        );
+
+        if(i % 1000 == 0){
+            std::cout << "Iteration: " << i << " | loss: " << loss << "\n";
+        }
+    }
+
+    auto fw = forward_pass(A, weights_input_hidden, bias_hidden, weights_hidden_output, bias_output);
+    std::cout << "Final results after training: \n";
+    std::cout << "-------------------------------------- \n";
+    
+    for(const auto& rows : fw.a_output){
+        for(const auto& vals : rows){
+            std::cout << vals << " ";
+        }
+        std::cout << "\n";
+    }
+
+
     return 0;
 }
