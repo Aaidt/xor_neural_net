@@ -25,13 +25,11 @@ double box_muller(){
 
 std::vector<std::vector<double>> randn(int rows, int cols){
     std::vector<std::vector<double>> v(rows, std::vector<double>(cols));
-    
     for(int i = 0; i < rows; i ++){
         for(int j = 0; j < cols; j++){
             v[i][j] = box_muller() * 0.5;
         }
     }
-
     return v;
 }
 
@@ -40,7 +38,10 @@ std::vector<std::vector<double>> zeroes(int cols){
 }
 
 template <typename T>
-void print_matrix(const std::string& label, const std::vector<std::vector<T>>& matrix){
+void print_matrix(
+    const std::string& label, 
+    const std::vector<std::vector<T>>& matrix
+){
     std::cout << label << ": \n";
     for(const auto& rows : matrix){
         for(const auto& val : rows){
@@ -52,7 +53,9 @@ void print_matrix(const std::string& label, const std::vector<std::vector<T>>& m
 }
 
 template <typename T>
-std::vector<std::vector<T>> sigmoid(const std::vector<std::vector<T>>& matrix){
+std::vector<std::vector<T>> sigmoid(
+    const std::vector<std::vector<T>>& matrix
+){
     static_assert(std::is_floating_point<T>::value, "sigmoid requires a floating-point type");
 
     std::vector<std::vector<T>> result = matrix;
@@ -62,12 +65,13 @@ std::vector<std::vector<T>> sigmoid(const std::vector<std::vector<T>>& matrix){
             vals = 1.0 / (1.0 + (std::exp(-vals)));
         }
     }
-
     return result;
 }
 
 template <typename T>
-std::vector<std::vector<T>> sigmoid_derivative(const std::vector<std::vector<T>>& sigmoid_output){
+std::vector<std::vector<T>> sigmoid_derivative(
+    const std::vector<std::vector<T>>& sigmoid_output
+){
     static_assert(std::is_floating_point<T>::value, "sigmoid derivative requires a floating-point type");
 
     std::vector<std::vector<T>> result = sigmoid_output;
@@ -77,12 +81,14 @@ std::vector<std::vector<T>> sigmoid_derivative(const std::vector<std::vector<T>>
             val = val * (1.0 - val);
         }
     }
-
     return result;
 }
 
 template <typename T>
-std::vector<std::vector<T>> mat_mul(const std::vector<std::vector<T>>& a, const std::vector<std::vector<T>>& b){
+std::vector<std::vector<T>> mat_mul(
+    const std::vector<std::vector<T>>& a,
+    const std::vector<std::vector<T>>& b
+){
     static_assert(std::is_floating_point<T>::value, "matrix multiplication requires floating-point type");
 
     if(a.empty() || a[0].empty() || b.empty() || b[0].empty()){
@@ -110,6 +116,43 @@ std::vector<std::vector<T>> mat_mul(const std::vector<std::vector<T>>& a, const 
 
     return result;
 }
+
+template <typename T>
+std::vector<std::vector<T>> add_bias(
+    const std::vector<std::vector<T>>& matrix, 
+    const std::vector<std::vector<T>>& bias
+){
+    static_assert(std::is_floating_point<T>::value, "adding bias requires floating-point values");
+
+    if(matrix.empty() || matrix[0].empty()){
+        throw std::invalid_argument("matrix cannot be empty");
+    }
+
+    int n = matrix.size();
+    int m = matrix[0].size();
+
+    for(const auto& rows : matrix){
+        if(rows.size() != m){
+            throw std::invalid_argument("Matrix rows must have equal size");
+        }
+    }
+
+    if(bias.size() != 1 || bias[0].size() != m){
+        throw std::invalid_argument("bias must be 1 x m matrix");
+    }
+
+    std::vector<std::vector<T>> result = matrix;
+
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < m; j++){
+            result[i][j] += bias[0][j];
+        }
+    }
+
+    return result;
+}
+
+
 
 int main (){
     std::vector<std::vector<int>> A = {
