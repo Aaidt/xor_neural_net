@@ -122,7 +122,7 @@ std::vector<std::vector<T>> add_bias(
     const std::vector<std::vector<T>>& matrix, 
     const std::vector<std::vector<T>>& bias
 ){
-    static_assert(std::is_floating_point<T>::value, "adding bias requires floating-point values");
+    static_assert(std::is_floating_point<T>::value, "adding bias requires floating-point type");
 
     if(matrix.empty() || matrix[0].empty()){
         throw std::invalid_argument("matrix cannot be empty");
@@ -152,7 +152,35 @@ std::vector<std::vector<T>> add_bias(
     return result;
 }
 
+template <typename T>
+struct Forward {
+    std::vector<std::vector<T>> z_hidden;
+    std::vector<std::vector<T>> a_hidden;
+    std::vector<std::vector<T>> z_output;
+    std::vector<std::vector<T>> a_output;
+};
 
+template <typename T>
+Forward<T> forward_pass(
+    const std::vector<std::vector<T>>& A,
+    const std::vector<std::vector<T>>& w1,
+    const std::vector<std::vector<T>>& b1,
+    const std::vector<std::vector<T>>& w2,
+    const std::vector<std::vector<T>>& b2
+){
+    static_assert(std::is_floating_point<T>::value, "forward_pass requires floating-point type");
+    Forward<T> out;
+
+    // input => hidden
+    out.z_hidden = add_bias(mat_mul(A, w1), b1);
+    out.a_hidden = sigmoid(out.z_hidden);
+
+    // hidden => output
+    out.z_output = add_bias(mat_mul(out.a_hidden, w2), b2);
+    out.a_output = sigmoid(out.z_output);
+
+    return out;
+} 
 
 int main (){
     std::vector<std::vector<int>> A = {
