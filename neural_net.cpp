@@ -45,7 +45,7 @@ void print_matrix(
     std::cout << label << ": \n";
     for(const auto& rows : matrix){
         for(const auto& val : rows){
-            std::cout << "| " << val << " | ";
+            std::cout << val << " ";
         }
         std::cout << "\n";
     }
@@ -183,18 +183,18 @@ Forward<T> forward_pass(
 } 
 
 int main (){
-    std::vector<std::vector<int>> A = {
-        {0, 0},
-        {0, 1},
-        {1, 0},
-        {1, 1}
+    std::vector<std::vector<double>> A = {
+        {0.0, 1.0},
+        {0.0, 0.0},
+        {1.0, 0.0},
+        {1.0, 1.0}
     };
 
-    std::vector<std::vector<int>> B = {
-        {0},
-        {1},
-        {1},
-        {0}
+    std::vector<std::vector<double>> B = {
+        {0.0},
+        {1.0},
+        {1.0},
+        {0.0}
     };
         
     int INPUT_SIZE = 2;
@@ -211,7 +211,15 @@ int main (){
     print_matrix("weights_hidden_output", weights_hidden_output);
     print_matrix("bias_output", bias_output);
     
-
+    auto fw_pass = forward_pass(A, weights_input_hidden, bias_hidden, weights_hidden_output, bias_output);
+    std::cout << "Forward pass on an untrained network: \n" << "---------------------------------------------- \n";
+    for(const auto& rows : fw_pass.a_output){
+        for(const auto& vals : rows){
+            std::cout << vals << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
 
     return 0;
 }
