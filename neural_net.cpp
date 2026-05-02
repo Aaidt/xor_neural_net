@@ -208,6 +208,245 @@ T compute_loss(
     return sum / (n * m);
 }
 
+template <typename T>
+std::vector<std::vector<T>> hadamard_product(
+    const std::vector<std::vector<T>>& A,
+    const std::vector<std::vector<T>>& B
+){
+    static_assert(std::is_floating_point<T>::value, "hadamard_product requires floating-point type");
+    if(A.empty() || A[0].empty() || B.empty() || B[0].empty()){
+        throw std::invalid_argument("Matrices cant be empty");
+    }
+
+    int n = A.size();
+    int m = A[0].size();
+
+    if(B.size() != n || B[0].size() != m){
+        throw std::invalid_argument("Matrices must have the same dimensions");
+    }
+
+    for(const auto& rows : A){
+        if(rows.size() != m){
+            throw std::invalid_argument("A is not rectangular");
+        }
+    }
+
+    for(const auto& rows : B){
+        if(rows.size() != m){
+            throw std::invalid_argument("B is not rectangular");
+        }
+    }
+
+    std::vector<std::vector<T>> result(n, std::vector<T>(m));
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < m; j++){
+            result[i][j] = A[i][j] * B[i][j];
+        }
+    }
+
+    return result;
+}
+
+template <typename T>
+std::vector<std::vector<T>> elementwise_sub(
+    const std::vector<std::vector<T>>& A,
+    const std::vector<std::vector<T>>& B
+){
+    static_assert(std::is_floating_point<T>::value, "hadamard_product requires floating-point type");
+
+    int n = A.size();
+    int m = A[0].size();
+    if(A.size() != B.size() || A[0].size() != B[0].size()){
+        throw std::invalid_argument("Both matrices should have the same dimensions");
+    }
+
+    for(const auto& rows : A){
+        if(rows.size() != m){
+            throw std::invalid_argument("A is not rectangular");
+        }
+    }
+
+    for(const auto& rows : B){
+        if(rows.size() != m){
+            throw std::invalid_argument("B is not rectangular");
+        }
+    }
+
+    std::vector<std::vector<T>> result(n, std::vector<T>(m));
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < m; j++){
+            result[i][j] = A[i][j] - B[i][j];
+        }
+    }
+
+    return result;
+}
+
+template <typename T>
+std::vector<std::vector<T>> transpose(
+    const std::vector<std::vector<T>>& matrix
+){
+    if(matrix.empty() || matrix[0].empty()){
+        throw std::invalid_argument("Matrix cannot be empty");
+    }
+
+    int n = matrix.size();
+    int m = matrix[0].size();
+    for(const auto& rows : matrix){
+        if(rows.size() != m){
+            throw std::invalid_argument("Matrix is not reactangular");
+        }
+    }
+
+    std::vector<std::vector<T>> result(m, std::vector<T>(n));
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < m; j++){
+            result[j][i] = matrix[i][j];
+        }
+    }
+
+    return result;
+}
+
+template <typename T>
+std::vector<std::vector<T>> scalar_operation(
+    const std::vector<std::vector<T>>& matrix,
+    T val,
+    std::string op
+){
+    if(matrix.empty() || matrix[0].empty()){
+        throw std::invalid_argument("Matrix cannot be empty");
+    }
+
+    if(op != "multiply" && op != "divide"){
+        throw std::invalid_argument("operation must be either multiply or divide");
+    }
+
+    int n = matrix.size();
+    int m = matrix[0].size();
+    for(const auto& rows : matrix){
+        if(rows.size() != m){
+            throw std::invalid_argument("Matrix is not reactangular");
+        }
+    }
+
+    std::vector<std::vector<T>> result = matrix;
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < m; j++){
+            if(op == "divide"){
+                result[i][j] = matrix[i][j] / val;
+            }else if(op == "multiply"){
+                result[i][j] = matrix[i][j] * val;
+            }
+        }
+    }
+
+    return result;
+}
+
+template <typename T>
+std::vector<std::vector<T>> sum_rows(
+    const std::vector<std::vector<T>>& matrix
+){
+    if(matrix.empty() || matrix[0].empty()){
+        throw std::invalid_argument("Matrix cannot be empty");
+    }
+
+    int n = matrix.size();
+    int m = matrix[0].size();
+    for(const auto& rows : matrix){
+        if(rows.size() != m){
+            throw std::invalid_argument("Matrix is not reactangular");
+        }
+    }
+
+    std::vector<std::vector<T>> result(1, std::vector<T>(m, 0));
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < m; j++){
+            result[0][j] += matrix[i][j];
+        }
+    }
+
+    return result;
+}
+
+
+template <typename T>
+void backward_pass(
+    const std::vector<std::vector<T>>& A,
+    const std::vector<std::vector<T>>& B,
+    const std::vector<std::vector<T>>& z_hidden,
+    const std::vector<std::vector<T>>& a_hidden,
+    const std::vector<std::vector<T>>& z_output,
+    const std::vector<std::vector<T>>& a_output,
+    std::vector<std::vector<T>>& weights_hidden_output,
+    std::vector<std::vector<T>>& bias_output,
+    std::vector<std::vector<T>>& weights_input_hidden,
+    std::vector<std::vector<T>>& bias_hidden,
+    double learning_rate
+){
+    static_assert(std::is_floating_point<T>::value, "backward_pass requires floating-point type");
+
+    T val = static_cast<T>(A.size());
+
+    // OUTPUT LAYER
+    std::vector<std::vector<T>> output_error = elementwise_sub(a_output, B);
+    std::vector<std::vector<T>> output_delta = hadamard_product(output_error, sigmoid_derivative(a_output));
+
+    std::vector<std::vector<T>> grad_weights_hidden_output = scalar_operation(
+        mat_mul(transpose(a_hidden), output_delta),
+        val,
+        "divide"
+    );
+
+    std::vector<std::vector<T>> grad_bias_output = scalar_operation(
+        sum_rows(output_delta),
+        val,
+        "divide"
+    );
+
+    // HIDDEN LAYER
+    std::vector<std::vector<T>> hidden_error = mat_mul(
+        output_delta,
+        transpose(weights_hidden_output)
+    );
+    std::vector<std::vector<T>> hidden_delta = hadamard_product(
+        hidden_error,
+        sigmoid_derivative(a_hidden)
+    );
+
+    std::vector<std::vector<T>> grad_weights_input_hidden = scalar_operation(
+        mat_mul(transpose(A), hidden_delta),
+        val,
+        "divide"
+    );
+    std::vector<std::vector<T>> grad_bias_hidden = scalar_operation(
+        sum_rows(hidden_delta),
+        val,
+        "divide"
+    );
+
+    // UPDATE WEIGHTS
+    weights_hidden_output = elementwise_sub(
+        weights_hidden_output,
+        scalar_operation(grad_weights_hidden_output, learning_rate, "multiply")
+    );
+    bias_output = elementwise_sub(
+        bias_output,
+        scalar_operation(grad_bias_output, learning_rate, "multiply")
+    );
+    weights_input_hidden = elementwise_sub(
+        weights_input_hidden,
+        scalar_operation(grad_weights_input_hidden, learning_rate, "multiply")
+    );
+    bias_hidden = elementwise_sub(
+        bias_hidden,
+        scalar_operation(grad_bias_hidden, learning_rate, "multiply")
+    );
+
+}
+
+
 int main (){
     std::vector<std::vector<double>> A = {
         {0.0, 1.0},
