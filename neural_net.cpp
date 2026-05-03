@@ -528,7 +528,7 @@ int main (){
     
     for(const auto& rows : fw.a_output){
         for(const auto& vals : rows){
-            std::cout << vals << " ";
+            std::cout << std::round(vals) << " ";
         }
         std::cout << "\n";
     }
