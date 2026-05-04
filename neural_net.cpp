@@ -493,7 +493,7 @@ int main (){
     int iterations = 10000;
     std::vector<double> loss_history;
 
-    std::cout << "Starting training... \n";
+    std::cout << "\n Starting training... \n";
     std::cout << "---------------------------------- \n";
 
     for(int i = 0; i < iterations; i++){
